@@ -1,0 +1,28 @@
+[project]
+name = "cisco-mcp"
+version = "0.1.0"
+description = "Read-only MCP server for Cisco IOS/IOS-XE and Nexus (NX-OS) switches with two-account privilege handling."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.2.0",
+    "netmiko>=4.3.0",
+    "pyyaml>=6.0",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+cisco-mcp = "cisco_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cisco_mcp"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

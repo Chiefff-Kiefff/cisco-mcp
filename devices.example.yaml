@@ -1,0 +1,22 @@
+# Device inventory for cisco-mcp.
+# Copy to devices.yaml (gitignored) and edit. Platform must be one of:
+#   ios    -> Cisco IOS        (privilege levels; priv-15 used for show run)
+#   iosxe  -> Cisco IOS-XE     (privilege levels; priv-15 used for show run)
+#   nxos   -> Cisco Nexus NX-OS (RBAC; read-only account reads everything)
+
+devices:
+  core-sw1:
+    host: 10.0.0.11
+    platform: iosxe
+    description: "Core switch, building A"
+
+  access-sw5:
+    host: 10.0.0.55
+    platform: ios
+    port: 22
+    description: "Access closet 5"
+
+  nexus-agg1:
+    host: 10.0.1.10
+    platform: nxos
+    description: "Nexus aggregation (network-operator role reads run-config)"
