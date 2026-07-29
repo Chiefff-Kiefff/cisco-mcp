@@ -11,8 +11,14 @@ priv-15 account doing everything. So the server uses **two accounts**:
 
 | Account | Used for |
 | --- | --- |
-| **Read-only** (`CISCO_RO_*`) | Every normal tool call |
-| **Privilege-15** (`CISCO_PRIV15_*`) | Only commands that need priv 15 on IOS/IOS-XE (`show running-config`, `show startup-config`, `show tech-support`, …) |
+| **Read-only** (`CISCO_RO_*`) | Every tool call |
+| **Privilege-15** (`CISCO_PRIV15_*`) | Only `show running-config` on IOS/IOS-XE |
+
+The priv-15 account is scoped as tightly as possible: it fires **only** when the
+command is `show running-config` (or its abbreviations `show run` / `sh run` /
+`show running`) on an IOS/IOS-XE device. Everything else — including
+`show startup-config`, `show tech-support`, and `show archive` — stays on the
+read-only account.
 
 **Platform-aware:** privilege levels are an IOS/IOS-XE concept. Nexus uses RBAC —
 its read-only `network-operator` role can already read the running config — so on
@@ -64,10 +70,46 @@ stdio transport, e.g. in a client config:
 
 ## Tools
 
+25 tools total. Every one runs through the same allowlist + account-selection
+gate; only `get_running_config` (or `run_show_command` with `show running-config`)
+on an IOS/IOS-XE device escalates to the priv-15 account.
+
+**Meta**
 - `list_devices` — inventory with platform + notes
-- `get_version`, `get_interfaces`, `get_interface_status`, `get_vlans`, `get_cdp_neighbors`
-- `get_running_config` — priv-15 account on IOS, read-only on NX-OS
 - `run_show_command(device, command)` — any allowlisted `show`, with the same gate
+
+**System / identity**
+- `get_version` — `show version`
+- `get_running_config` — `show running-config` *(priv-15 on IOS/IOS-XE, read-only on NX-OS)*
+- `get_inventory_hw` — `show inventory` (chassis / modules / serial numbers)
+- `get_clock` — `show clock`
+- `get_logs` — `show logging`
+
+**Health / capacity**
+- `get_cpu` — `show processes cpu history` (IOS/IOS-XE) / `show system resources` (NX-OS)
+- `get_memory` — `show memory statistics` (IOS/IOS-XE) / `show system resources` (NX-OS)
+- `get_environment` — `show environment`
+- `get_poe_status` — `show power inline`
+
+**L2 / switching**
+- `get_interfaces` — `show interfaces`
+- `get_interface_status` — `show ip interface brief`
+- `get_vlans` — `show vlan brief`
+- `get_trunks` — `show interfaces trunk`
+- `get_spanning_tree` — `show spanning-tree`
+- `get_etherchannels` — `show etherchannel summary` (IOS/IOS-XE) / `show port-channel summary` (NX-OS)
+- `get_mac_address_table` — `show mac address-table`
+
+**L3 / routing**
+- `get_arp_table` — `show ip arp`
+- `get_routing_table` — `show ip route`
+- `get_ospf_neighbors` — `show ip ospf neighbor`
+- `get_bgp_summary` — `show ip bgp summary`
+- `get_eigrp_neighbors` — `show ip eigrp neighbors`
+
+**Neighbor discovery**
+- `get_cdp_neighbors` — `show cdp neighbors detail`
+- `get_lldp_neighbors` — `show lldp neighbors detail`
 
 ## Layout
 
