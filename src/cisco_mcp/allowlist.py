@@ -64,17 +64,11 @@ _FORBIDDEN_PHRASES = (
 
 # --- Privilege-15 policy (IOS/IOS-XE) -------------------------------------
 
-# Commands that require privileged EXEC (priv 15) on IOS/IOS-XE. Matched after
-# normalization, with abbreviations handled. This is the hardcoded policy the
-# user asked for: these route to the priv-15 account on IOS devices.
-_PRIV15 = re.compile(
-    r"^sh(ow)?\s+("
-    r"run(n(ing(-config)?)?)?"      # show run / running / running-config
-    r"|start(up(-config)?)?"        # show startup / startup-config
-    r"|tech(-support)?"             # show tech-support
-    r"|archive"                     # show archive config ...
-    r")\b"
-)
+# The ONLY command that escalates to the priv-15 account. Matched after
+# normalization, with abbreviations handled (show run / running / running-config).
+# Anything else -- including startup-config, tech-support, archive -- stays on
+# the read-only account.
+_PRIV15 = re.compile(r"^sh(ow)?\s+run(n(ing(-config)?)?)?\b")
 
 
 def requires_privilege15(command: str) -> bool:

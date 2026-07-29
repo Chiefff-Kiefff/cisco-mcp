@@ -3,8 +3,7 @@
 Two accounts, per the design:
 
 * Read-only account  -- used for ALL normal tool calls.
-* Priv-15 account    -- used ONLY for commands that require privilege 15 on
-                        IOS/IOS-XE (e.g. ``show running-config``).
+* Priv-15 account    -- used ONLY for ``show running-config`` on IOS/IOS-XE.
 
 Secrets are never hardcoded in source. They come from environment variables
 (typically loaded from a gitignored ``.env``). The *policy* of which account to
