@@ -69,11 +69,8 @@ def test_rejected(cmd):
         "show running-config",
         "show run",
         "sh run",
+        "show running",
         "show running-config all",
-        "show startup-config",
-        "show start",
-        "show tech-support",
-        "show archive config differences",
     ],
 )
 def test_requires_priv15(cmd):
@@ -88,10 +85,12 @@ def test_requires_priv15(cmd):
         "show vlan brief",
         "show interfaces",
         "show cdp neighbors detail",
-        "show running",  # actually 'show run...' abbreviation -> see below
+        # Deliberately NOT priv-15: only 'show running-config' escalates.
+        "show startup-config",
+        "show start",
+        "show tech-support",
+        "show archive config differences",
     ],
 )
 def test_does_not_require_priv15(cmd):
-    # 'show running' is the abbreviation for running-config, so it DOES need 15.
-    expected = cmd.startswith("show running")
-    assert requires_privilege15(cmd) is expected
+    assert requires_privilege15(cmd) is False
