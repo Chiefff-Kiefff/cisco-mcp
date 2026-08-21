@@ -8,8 +8,8 @@ This ties the pieces together:
 
 Account-selection rule (hardcoded policy):
 
-* IOS / IOS-XE + command needs priv 15  -> priv-15 account
-* everything else (incl. all NX-OS)     -> read-only account
+* IOS / IOS-XE / ASA + command needs priv 15 -> priv-15 account
+* everything else (incl. all NX-OS)          -> read-only account
 """
 
 from __future__ import annotations

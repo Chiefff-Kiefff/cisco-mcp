@@ -71,6 +71,11 @@ def _run_by_platform(device_name: str, by_platform: dict[Platform, str]) -> str:
     return _run_on(device, command)
 
 
+def _ios_family(command: str) -> dict[Platform, str]:
+    """Both IOS and IOS-XE take the same command; helper to cut repetition."""
+    return {Platform.IOS: command, Platform.IOSXE: command}
+
+
 # --- Tools -----------------------------------------------------------------
 
 
@@ -94,9 +99,9 @@ def run_show_command(device: str, command: str) -> str:
     """Run an arbitrary read-only 'show' command on a device.
 
     Only 'show' commands are permitted; the server rejects anything else. On
-    IOS/IOS-XE, 'show running-config' is the only command that escalates to
-    the privilege-15 account -- everything else, and every command on NX-OS,
-    uses the read-only account.
+    IOS/IOS-XE/ASA, 'show running-config' is the only command that escalates
+    to the privilege-15 account -- everything else, and every command on
+    NX-OS, uses the read-only account.
     """
     return _run(device, command)
 
@@ -114,8 +119,8 @@ def get_version(device: str) -> str:
 def get_running_config(device: str) -> str:
     """Show the running configuration ('show running-config').
 
-    On IOS/IOS-XE this uses the privilege-15 account; on NX-OS the read-only
-    (network-operator) account can already read it.
+    On IOS/IOS-XE/ASA this uses the privilege-15 account; on NX-OS the
+    read-only (network-operator) account can already read it.
     """
     return _run(device, "show running-config")
 
@@ -146,11 +151,12 @@ def get_cpu(device: str) -> str:
     """Show CPU utilization.
 
     IOS/IOS-XE: 'show processes cpu history'. NX-OS: 'show system resources'.
+    ASA: 'show cpu usage'.
     """
     return _run_by_platform(device, {
-        Platform.IOS: "show processes cpu history",
-        Platform.IOSXE: "show processes cpu history",
+        **_ios_family("show processes cpu history"),
         Platform.NXOS: "show system resources",
+        Platform.ASA: "show cpu usage",
     })
 
 
@@ -159,11 +165,12 @@ def get_memory(device: str) -> str:
     """Show memory utilization.
 
     IOS/IOS-XE: 'show memory statistics'. NX-OS: 'show system resources'.
+    ASA: 'show memory'.
     """
     return _run_by_platform(device, {
-        Platform.IOS: "show memory statistics",
-        Platform.IOSXE: "show memory statistics",
+        **_ios_family("show memory statistics"),
         Platform.NXOS: "show system resources",
+        Platform.ASA: "show memory",
     })
 
 
@@ -176,7 +183,10 @@ def get_environment(device: str) -> str:
 @mcp.tool()
 def get_poe_status(device: str) -> str:
     """Show PoE inline power status ('show power inline'). Only meaningful on PoE switches."""
-    return _run(device, "show power inline")
+    return _run_by_platform(device, {
+        **_ios_family("show power inline"),
+        Platform.NXOS: "show power inline",
+    })
 
 
 # --- L2 / campus switching ------------------------------------------------
@@ -184,51 +194,79 @@ def get_poe_status(device: str) -> str:
 
 @mcp.tool()
 def get_interfaces(device: str) -> str:
-    """Show interface details ('show interfaces')."""
-    return _run(device, "show interfaces")
+    """Show interface details ('show interfaces'; 'show interface' on ASA)."""
+    return _run_by_platform(device, {
+        **_ios_family("show interfaces"),
+        Platform.NXOS: "show interface",
+        Platform.ASA: "show interface",
+    })
 
 
 @mcp.tool()
 def get_interface_status(device: str) -> str:
-    """Show a brief interface status table ('show ip interface brief')."""
-    return _run(device, "show ip interface brief")
+    """Show a brief interface status table.
+
+    IOS/IOS-XE/NX-OS: 'show ip interface brief'. ASA: 'show interface ip brief'.
+    """
+    return _run_by_platform(device, {
+        **_ios_family("show ip interface brief"),
+        Platform.NXOS: "show ip interface brief",
+        Platform.ASA: "show interface ip brief",
+    })
 
 
 @mcp.tool()
 def get_vlans(device: str) -> str:
-    """Show configured VLANs ('show vlan brief')."""
-    return _run(device, "show vlan brief")
+    """Show configured VLANs ('show vlan brief'). Not supported on ASA."""
+    return _run_by_platform(device, {
+        **_ios_family("show vlan brief"),
+        Platform.NXOS: "show vlan brief",
+    })
 
 
 @mcp.tool()
 def get_trunks(device: str) -> str:
-    """Show trunk interfaces and allowed VLANs ('show interfaces trunk')."""
-    return _run(device, "show interfaces trunk")
+    """Show trunk interfaces and allowed VLANs ('show interfaces trunk'). Not supported on ASA."""
+    return _run_by_platform(device, {
+        **_ios_family("show interfaces trunk"),
+        Platform.NXOS: "show interface trunk",
+    })
 
 
 @mcp.tool()
 def get_spanning_tree(device: str) -> str:
-    """Show spanning-tree state per VLAN ('show spanning-tree')."""
-    return _run(device, "show spanning-tree")
+    """Show spanning-tree state per VLAN ('show spanning-tree'). Not supported on ASA."""
+    return _run_by_platform(device, {
+        **_ios_family("show spanning-tree"),
+        Platform.NXOS: "show spanning-tree",
+    })
 
 
 @mcp.tool()
 def get_etherchannels(device: str) -> str:
     """Show link-aggregation state.
 
-    IOS/IOS-XE: 'show etherchannel summary'. NX-OS: 'show port-channel summary'.
+    IOS/IOS-XE: 'show etherchannel summary'. NX-OS/ASA: 'show port-channel summary'.
     """
     return _run_by_platform(device, {
-        Platform.IOS: "show etherchannel summary",
-        Platform.IOSXE: "show etherchannel summary",
+        **_ios_family("show etherchannel summary"),
         Platform.NXOS: "show port-channel summary",
+        Platform.ASA: "show port-channel summary",
     })
 
 
 @mcp.tool()
 def get_mac_address_table(device: str) -> str:
-    """Show the MAC address table ('show mac address-table')."""
-    return _run(device, "show mac address-table")
+    """Show the MAC address table.
+
+    'show mac address-table' on switches; 'show mac-address-table' on ASA
+    (only populated in transparent firewall mode).
+    """
+    return _run_by_platform(device, {
+        **_ios_family("show mac address-table"),
+        Platform.NXOS: "show mac address-table",
+        Platform.ASA: "show mac-address-table",
+    })
 
 
 # --- L3 / routing ---------------------------------------------------------
@@ -236,32 +274,52 @@ def get_mac_address_table(device: str) -> str:
 
 @mcp.tool()
 def get_arp_table(device: str) -> str:
-    """Show the ARP table ('show ip arp')."""
-    return _run(device, "show ip arp")
+    """Show the ARP table ('show ip arp'; 'show arp' on ASA)."""
+    return _run_by_platform(device, {
+        **_ios_family("show ip arp"),
+        Platform.NXOS: "show ip arp",
+        Platform.ASA: "show arp",
+    })
 
 
 @mcp.tool()
 def get_routing_table(device: str) -> str:
-    """Show the IPv4 routing table ('show ip route')."""
-    return _run(device, "show ip route")
+    """Show the IPv4 routing table ('show ip route'; 'show route' on ASA)."""
+    return _run_by_platform(device, {
+        **_ios_family("show ip route"),
+        Platform.NXOS: "show ip route",
+        Platform.ASA: "show route",
+    })
 
 
 @mcp.tool()
 def get_ospf_neighbors(device: str) -> str:
-    """Show OSPF neighbors ('show ip ospf neighbor')."""
-    return _run(device, "show ip ospf neighbor")
+    """Show OSPF neighbors ('show ip ospf neighbor'; 'show ospf neighbor' on ASA)."""
+    return _run_by_platform(device, {
+        **_ios_family("show ip ospf neighbor"),
+        Platform.NXOS: "show ip ospf neighbor",
+        Platform.ASA: "show ospf neighbor",
+    })
 
 
 @mcp.tool()
 def get_bgp_summary(device: str) -> str:
-    """Show BGP peer summary ('show ip bgp summary')."""
-    return _run(device, "show ip bgp summary")
+    """Show BGP peer summary ('show ip bgp summary'; 'show bgp summary' on ASA)."""
+    return _run_by_platform(device, {
+        **_ios_family("show ip bgp summary"),
+        Platform.NXOS: "show ip bgp summary",
+        Platform.ASA: "show bgp summary",
+    })
 
 
 @mcp.tool()
 def get_eigrp_neighbors(device: str) -> str:
-    """Show EIGRP neighbors ('show ip eigrp neighbors')."""
-    return _run(device, "show ip eigrp neighbors")
+    """Show EIGRP neighbors ('show ip eigrp neighbors'; 'show eigrp neighbors' on ASA)."""
+    return _run_by_platform(device, {
+        **_ios_family("show ip eigrp neighbors"),
+        Platform.NXOS: "show ip eigrp neighbors",
+        Platform.ASA: "show eigrp neighbors",
+    })
 
 
 # --- Neighbor discovery ---------------------------------------------------
@@ -269,14 +327,67 @@ def get_eigrp_neighbors(device: str) -> str:
 
 @mcp.tool()
 def get_cdp_neighbors(device: str) -> str:
-    """Show directly connected Cisco neighbors ('show cdp neighbors detail')."""
-    return _run(device, "show cdp neighbors detail")
+    """Show directly connected Cisco neighbors ('show cdp neighbors detail'). Not supported on ASA."""
+    return _run_by_platform(device, {
+        **_ios_family("show cdp neighbors detail"),
+        Platform.NXOS: "show cdp neighbors detail",
+    })
 
 
 @mcp.tool()
 def get_lldp_neighbors(device: str) -> str:
-    """Show LLDP neighbors, including non-Cisco devices ('show lldp neighbors detail')."""
-    return _run(device, "show lldp neighbors detail")
+    """Show LLDP neighbors, including non-Cisco devices ('show lldp neighbors detail'). Not supported on ASA."""
+    return _run_by_platform(device, {
+        **_ios_family("show lldp neighbors detail"),
+        Platform.NXOS: "show lldp neighbors detail",
+    })
+
+
+# --- Firewall (ASA) ---------------------------------------------------------
+
+
+@mcp.tool()
+def get_failover_status(device: str) -> str:
+    """Show ASA failover (HA) state and health ('show failover'). ASA only."""
+    return _run_by_platform(device, {Platform.ASA: "show failover"})
+
+
+@mcp.tool()
+def get_connection_count(device: str) -> str:
+    """Show the ASA connection table count ('show conn count'). ASA only."""
+    return _run_by_platform(device, {Platform.ASA: "show conn count"})
+
+
+@mcp.tool()
+def get_xlate_count(device: str) -> str:
+    """Show the ASA NAT translation count ('show xlate count'). ASA only."""
+    return _run_by_platform(device, {Platform.ASA: "show xlate count"})
+
+
+@mcp.tool()
+def get_nat(device: str) -> str:
+    """Show ASA NAT policies with hit counts ('show nat'). ASA only."""
+    return _run_by_platform(device, {Platform.ASA: "show nat"})
+
+
+@mcp.tool()
+def get_vpn_sessions(device: str) -> str:
+    """Show a summary of active VPN sessions ('show vpn-sessiondb'). ASA only."""
+    return _run_by_platform(device, {Platform.ASA: "show vpn-sessiondb"})
+
+
+@mcp.tool()
+def get_access_lists(device: str) -> str:
+    """Show access lists with hit counts.
+
+    'show access-lists' on IOS/IOS-XE/NX-OS; 'show access-list' on ASA.
+    Can be very large on firewalls with big policies.
+    """
+    return _run_by_platform(device, {
+        **_ios_family("show access-lists"),
+        Platform.NXOS: "show access-lists",
+        Platform.ASA: "show access-list",
+    })
 
 
 def main() -> None:

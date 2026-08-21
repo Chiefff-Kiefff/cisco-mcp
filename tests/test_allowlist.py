@@ -26,6 +26,14 @@ from cisco_mcp.allowlist import (
         "show cdp neighbors detail",
         "show running-config | include hostname",  # read-only pipe filter is fine
         "show ip route | section bgp",
+        # ASA-flavored shows
+        "show failover",
+        "show conn count",
+        "show xlate count",
+        "show nat",
+        "show vpn-sessiondb",
+        "show access-list",
+        "show interface ip brief",
     ],
 )
 def test_allowed(cmd):

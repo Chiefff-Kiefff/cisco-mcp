@@ -3,6 +3,8 @@
 #   ios    -> Cisco IOS        (privilege levels; priv-15 used for show run)
 #   iosxe  -> Cisco IOS-XE     (privilege levels; priv-15 used for show run)
 #   nxos   -> Cisco Nexus NX-OS (RBAC; read-only account reads everything)
+#   asa    -> Cisco ASA, incl. Firepower appliances running the ASA image
+#             (privilege levels; priv-15 used for show run). NOT for FTD.
 
 devices:
   core-sw1:
@@ -20,3 +22,8 @@ devices:
     host: 10.0.1.10
     platform: nxos
     description: "Nexus aggregation (network-operator role reads run-config)"
+
+  fw-edge1:
+    host: 10.0.2.1
+    platform: asa
+    description: "Firepower 2110 running ASA image, edge firewall"
