@@ -51,3 +51,19 @@ def test_nxos_show_run_uses_readonly(fake_accounts):
     account, label = connection.select_account(dev(Platform.NXOS), "show running-config")
     assert account is ro
     assert label == "read-only"
+
+
+def test_asa_show_run_uses_priv15(fake_accounts):
+    """ASA uses IOS-style privilege levels: show run needs priv 15 there too."""
+    _, p15 = fake_accounts
+    account, label = connection.select_account(dev(Platform.ASA), "show running-config")
+    assert account is p15
+    assert label == "privilege-15"
+
+
+def test_asa_other_shows_use_readonly(fake_accounts):
+    ro, _ = fake_accounts
+    for cmd in ("show version", "show failover", "show conn count", "show route"):
+        account, label = connection.select_account(dev(Platform.ASA), cmd)
+        assert account is ro
+        assert label == "read-only"
