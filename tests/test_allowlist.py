@@ -34,6 +34,11 @@ from cisco_mcp.allowlist import (
         "show vpn-sessiondb",
         "show access-list",
         "show interface ip brief",
+        "show ipv6 interface brief",
+        "show ipv6 route",
+        "show ipv6 neighbor",
+        "show ipv6 neighbors",
+        "show module",
     ],
 )
 def test_allowed(cmd):
