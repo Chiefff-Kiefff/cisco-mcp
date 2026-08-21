@@ -132,6 +132,21 @@ def get_inventory_hw(device: str) -> str:
 
 
 @mcp.tool()
+def get_modules(device: str) -> str:
+    """Show installed hardware/service modules ('show module').
+
+    On ASA/Firepower this reports the appliance's modules and their state; on
+    Nexus and modular Catalyst it lists line cards. Fixed-config switches may
+    return little or an 'invalid input' message -- harmless.
+    """
+    return _run_by_platform(device, {
+        **_ios_family("show module"),
+        Platform.NXOS: "show module",
+        Platform.ASA: "show module",
+    })
+
+
+@mcp.tool()
 def get_clock(device: str) -> str:
     """Show the device's current time ('show clock')."""
     return _run(device, "show clock")
@@ -216,6 +231,12 @@ def get_interface_status(device: str) -> str:
 
 
 @mcp.tool()
+def get_ipv6_interfaces(device: str) -> str:
+    """Show a brief IPv6 interface/address table ('show ipv6 interface brief')."""
+    return _run(device, "show ipv6 interface brief")
+
+
+@mcp.tool()
 def get_vlans(device: str) -> str:
     """Show configured VLANs ('show vlan brief'). Not supported on ASA."""
     return _run_by_platform(device, {
@@ -283,6 +304,19 @@ def get_arp_table(device: str) -> str:
 
 
 @mcp.tool()
+def get_ipv6_neighbors(device: str) -> str:
+    """Show the IPv6 neighbor table -- the IPv6 equivalent of the ARP table.
+
+    IOS/IOS-XE: 'show ipv6 neighbors'. NX-OS/ASA: 'show ipv6 neighbor'.
+    """
+    return _run_by_platform(device, {
+        **_ios_family("show ipv6 neighbors"),
+        Platform.NXOS: "show ipv6 neighbor",
+        Platform.ASA: "show ipv6 neighbor",
+    })
+
+
+@mcp.tool()
 def get_routing_table(device: str) -> str:
     """Show the IPv4 routing table ('show ip route'; 'show route' on ASA)."""
     return _run_by_platform(device, {
@@ -290,6 +324,12 @@ def get_routing_table(device: str) -> str:
         Platform.NXOS: "show ip route",
         Platform.ASA: "show route",
     })
+
+
+@mcp.tool()
+def get_ipv6_route(device: str) -> str:
+    """Show the IPv6 routing table ('show ipv6 route')."""
+    return _run(device, "show ipv6 route")
 
 
 @mcp.tool()

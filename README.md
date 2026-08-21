@@ -84,7 +84,7 @@ stdio transport, e.g. in a client config:
 
 ## Tools
 
-31 tools total. Every one runs through the same allowlist + account-selection
+35 tools total. Every one runs through the same allowlist + account-selection
 gate; only `get_running_config` (or `run_show_command` with `show running-config`)
 on an IOS/IOS-XE/ASA device escalates to the priv-15 account. Tools dispatch the
 right command variant per platform; a tool that doesn't apply to a platform
@@ -99,6 +99,7 @@ without touching the device.
 - `get_version` — `show version`
 - `get_running_config` — `show running-config` *(priv-15 on IOS/IOS-XE/ASA, read-only on NX-OS)*
 - `get_inventory_hw` — `show inventory` (chassis / modules / serial numbers)
+- `get_modules` — `show module` (hardware/service modules; ASA/Firepower, NX-OS, modular Catalyst)
 - `get_clock` — `show clock`
 - `get_logs` — `show logging`
 
@@ -119,7 +120,10 @@ without touching the device.
 
 **L3 / routing**
 - `get_arp_table` — `show ip arp` / `show arp` (ASA)
+- `get_ipv6_neighbors` — `show ipv6 neighbors` (IOS) / `show ipv6 neighbor` (NX-OS, ASA) — IPv6 equivalent of ARP
 - `get_routing_table` — `show ip route` / `show route` (ASA)
+- `get_ipv6_route` — `show ipv6 route`
+- `get_ipv6_interfaces` — `show ipv6 interface brief`
 - `get_ospf_neighbors` — `show ip ospf neighbor` / `show ospf neighbor` (ASA)
 - `get_bgp_summary` — `show ip bgp summary` / `show bgp summary` (ASA)
 - `get_eigrp_neighbors` — `show ip eigrp neighbors` / `show eigrp neighbors` (ASA)

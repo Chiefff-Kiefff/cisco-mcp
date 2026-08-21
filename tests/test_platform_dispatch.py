@@ -60,6 +60,24 @@ def test_asa_only_tools_work_on_asa(sent):
     assert sent["fw"] == "show vpn-sessiondb"
 
 
+def test_ipv6_and_module_dispatch(sent):
+    # IPv6 neighbor command differs: plural on IOS, singular on ASA/NX-OS.
+    server.get_ipv6_neighbors("sw")
+    assert sent["sw"] == "show ipv6 neighbors"
+    server.get_ipv6_neighbors("fw")
+    assert sent["fw"] == "show ipv6 neighbor"
+    server.get_ipv6_neighbors("nx")
+    assert sent["nx"] == "show ipv6 neighbor"
+    # IPv6 route/interface are uniform across platforms.
+    server.get_ipv6_route("fw")
+    assert sent["fw"] == "show ipv6 route"
+    server.get_ipv6_interfaces("fw")
+    assert sent["fw"] == "show ipv6 interface brief"
+    # Modules supported on ASA/NX-OS/Catalyst.
+    server.get_modules("fw")
+    assert sent["fw"] == "show module"
+
+
 def test_asa_only_tools_reject_other_platforms(sent):
     out = server.get_failover_status("sw")
     assert "not supported" in out
