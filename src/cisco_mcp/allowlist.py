@@ -45,6 +45,15 @@ _FORBIDDEN = (
     "&",
 )
 
+# Writing show output to a filesystem destination via the ``file`` keyword,
+# e.g. ``show tech-support file disk0:out.txt``. The pipe operators
+# (redirect/tee/append/>) are already blocked above; this closes the same
+# write-to-file vector when expressed as a ``file <fs>:`` argument instead of a
+# pipe. It deliberately does NOT match legit reads like ``show file systems``
+# (no filesystem URI follows ``file``) or ``show flash:`` (no ``file`` keyword).
+_FILE_WRITE = re.compile(r"\bfile\s+\S*:")
+
+
 # Even read-oriented EXEC commands that we explicitly never want to run.
 _FORBIDDEN_PHRASES = (
     "configure",
@@ -108,6 +117,12 @@ def check_command(command: str) -> str:
     for token in _FORBIDDEN:
         if token in norm:
             raise CommandError(f"Command contains forbidden token: {token!r}")
+
+    if _FILE_WRITE.search(norm):
+        raise CommandError(
+            "Command appears to write output to a filesystem destination "
+            "('file <fs>:'). This server is strictly read-only."
+        )
 
     for phrase in _FORBIDDEN_PHRASES:
         # match as a word/segment to avoid false positives inside arguments
